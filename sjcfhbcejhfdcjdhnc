@@ -4,15 +4,19 @@
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
 
-const int ledPin = D2;  // Define the LED control pin
+const int numLEDs = 18; // Number of LEDs in the strip
+const int ledPin = D2;  // Define the LED control pin (D2/GPIO4)
 
-int ledBrightness = 0;   // Variable to store LED brightness
-bool ledState = false;   // Variable to store LED state
+bool ledStates[numLEDs]; // Array to store the state of each LED in the strip
 
 ESP8266WebServer server(80);
 
 void setup() {
+  Serial.begin(115200); // Start Serial communication for debugging
   pinMode(ledPin, OUTPUT);
+  for (int i = 0; i < numLEDs; i++) {
+    ledStates[i] = false; // Initialize all LEDs to be off initially
+  }
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -26,39 +30,41 @@ void setup() {
   // Define web server routes
   server.on("/", HTTP_GET, handleRoot);
   server.on("/led", HTTP_GET, handleLED);
-  server.on("/brightness", HTTP_GET, handleBrightness);
 
   // Start the server
   server.begin();
   Serial.println("HTTP server started");
-  Serial.println(WiFi.localIP());
 }
 
 void loop() {
   server.handleClient();
-  // Add your other code here
+  delay(10); // Small delay for smoother execution (optional)
 }
 
 void handleRoot() {
+  Serial.println("Root endpoint accessed");
   String html = "<html><body>";
-  html += "<h1>Control Page</h1>";
-  html += "<p>LED: <a href='/led'><button>" + String(ledState ? "Turn Off" : "Turn On") + "</button></a></p>";
-  html += "<p>LED Brightness: <input type='range' min='0' max='1023' value='" + String(ledBrightness) + "' oninput='updateBrightness(this.value)'></p>";
-  html += "<script>function updateBrightness(value) { var xhr = new XMLHttpRequest(); xhr.open('GET', '/brightness?value=' + value, true); xhr.send(); }</script>";
+  html += "<h1>LED Strip Control</h1>";
+  for (int i = 0; i < numLEDs; i++) {
+    html += "<p>LED " + String(i + 1) + ": <a href='/led?id=" + String(i) + "'><button>" + String(ledStates[i] ? "Turn Off" : "Turn On") + "</button></a></p>";
+  }
   html += "</body></html>";
 
   server.send(200, "text/html", html);
 }
 
 void handleLED() {
-  ledState = !ledState;
-  digitalWrite(ledPin, ledState ? HIGH : LOW);
-  server.send(200, "text/plain", String(ledState ? "LED On" : "LED Off"));
-}
-
-void handleBrightness() {
-  String brightnessValue = server.arg("value");
-  ledBrightness = brightnessValue.toInt();
-  analogWrite(ledPin, ledBrightness);
-  server.send(200, "text/plain", "Brightness set to " + brightnessValue);
+  Serial.println("LED endpoint accessed");
+  if (server.args() > 0) {
+    int ledID = server.arg("id").toInt();
+    if (ledID >= 0 && ledID < numLEDs) {
+      ledStates[ledID] = !ledStates[ledID];
+      digitalWrite(ledPin, ledStates[ledID] ? HIGH : LOW);
+      server.send(200, "text/plain", String("LED ") + String(ledID + 1) + String(ledStates[ledID] ? " On" : " Off"));
+    } else {
+      server.send(400, "text/plain", "Invalid LED ID");
+    }
+  } else {
+    server.send(400, "text/plain", "No LED ID provided");
+  }
 }
