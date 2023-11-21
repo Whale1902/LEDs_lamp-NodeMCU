@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <FastLED.h>
 
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
@@ -8,15 +9,14 @@ const char* password = "m6v8aze8l";
 const int numLEDs = 18; // Number of LEDs in the strip
 const int ledPin = D2;  // Define the LED control pin (D2/GPIO4)
 
-int ledBrightness = 255; // Initial brightness value
-int ledColors[3] = {255, 255, 255}; // Initial RGB color (White)
+CRGB leds[numLEDs]; // Define FastLED array for LEDs
 
 ESP8266WebServer server(80);
 
 void setup() {
   Serial.begin(115200); // Start Serial communication for debugging
-  pinMode(ledPin, OUTPUT);
-  
+  FastLED.addLeds<WS2812B, D2, GRB>(leds, numLEDs); // Define LED strip type and pin
+
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -37,6 +37,7 @@ void setup() {
 
 void loop() {
   server.handleClient();
+  FastLED.show(); // Show the updated LED strip
   delay(10); // Small delay for smoother execution (optional)
 }
 
@@ -45,10 +46,10 @@ void handleRoot() {
   String html = "<html><body>";
   html += "<h1>LED Strip Control</h1>";
   html += "<form action='/set' method='post'>";
-  html += "<label for='red'>Red (0-255):</label><input type='number' id='red' name='red' min='0' max='255' value='" + String(ledColors[0]) + "'><br>";
-  html += "<label for='green'>Green (0-255):</label><input type='number' id='green' name='green' min='0' max='255' value='" + String(ledColors[1]) + "'><br>";
-  html += "<label for='blue'>Blue (0-255):</label><input type='number' id='blue' name='blue' min='0' max='255' value='" + String(ledColors[2]) + "'><br>";
-  html += "<label for='brightness'>Brightness (0-255):</label><input type='range' id='brightness' name='brightness' min='0' max='255' value='" + String(ledBrightness) + "'><br>";
+  html += "<label for='red'>Red (0-255):</label><input type='number' id='red' name='red' min='0' max='255' value='255'><br>";
+  html += "<label for='green'>Green (0-255):</label><input type='number' id='green' name='green' min='0' max='255' value='255'><br>";
+  html += "<label for='blue'>Blue (0-255):</label><input type='number' id='blue' name='blue' min='0' max='255' value='255'><br>";
+  html += "<label for='brightness'>Brightness (0-255):</label><input type='range' id='brightness' name='brightness' min='0' max='255' value='255'><br>";
   html += "<input type='submit' value='Set LED Color'>";
   html += "</form>";
   html += "</body></html>";
@@ -59,18 +60,14 @@ void handleRoot() {
 void handleSet() {
   Serial.println("Set endpoint accessed");
   if (server.hasArg("red") && server.hasArg("green") && server.hasArg("blue") && server.hasArg("brightness")) {
-    ledColors[0] = server.arg("red").toInt();
-    ledColors[1] = server.arg("green").toInt();
-    ledColors[2] = server.arg("blue").toInt();
-    ledBrightness = server.arg("brightness").toInt();
+    int red = server.arg("red").toInt();
+    int green = server.arg("green").toInt();
+    int blue = server.arg("blue").toInt();
+    int brightness = server.arg("brightness").toInt();
 
-    analogWrite(ledPin, ledBrightness);
-    for (int i = 0; i < numLEDs; i++) {
-      analogWrite(ledPin, ledBrightness);
-      analogWrite(ledPin, map(ledColors[0], 0, 255, 0, 1023));
-      analogWrite(ledPin, map(ledColors[1], 0, 255, 0, 1023));
-      analogWrite(ledPin, map(ledColors[2], 0, 255, 0, 1023));
-    }
+    // Set color and brightness for the entire LED strip
+    fill_solid(leds, numLEDs, CRGB(red, green, blue));
+    FastLED.setBrightness(brightness);
 
     server.send(200, "text/plain", "LED Color Set");
   } else {
