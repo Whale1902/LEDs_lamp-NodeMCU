@@ -1,22 +1,19 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
-const char* ssid = "YourWiFiSSID";
-const char* password = "YourWiFiPassword";
+const char* ssid = "RustyToha2.4";
+const char* password = "m6v8aze8l";
 
-const int soundPin = D4;   // Define the sound control pin
-const int ledPin = D2;     // Define the LED control pin
+const int ledPin = 16;  // Define the LED control pin
 
-int ledBrightness = 0;     // Variable to store LED brightness
-bool soundState = false;  // Variable to store sound state
-bool ledState = false;    // Variable to store LED state
+int ledBrightness = 0;   // Variable to store LED brightness
+bool ledState = false;   // Variable to store LED state
 
 ESP8266WebServer server(80);
 
 void setup() {
-  pinMode(soundPin, OUTPUT);
   pinMode(ledPin, OUTPUT);
-  
+
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -28,7 +25,6 @@ void setup() {
   
   // Define web server routes
   server.on("/", HTTP_GET, handleRoot);
-  server.on("/sound", HTTP_GET, handleSound);
   server.on("/led", HTTP_GET, handleLED);
   server.on("/brightness", HTTP_GET, handleBrightness);
 
@@ -45,19 +41,12 @@ void loop() {
 void handleRoot() {
   String html = "<html><body>";
   html += "<h1>Control Page</h1>";
-  html += "<p>Sound: <a href='/sound'><button>" + String(soundState ? "Turn Off" : "Turn On") + "</button></a></p>";
   html += "<p>LED: <a href='/led'><button>" + String(ledState ? "Turn Off" : "Turn On") + "</button></a></p>";
   html += "<p>LED Brightness: <input type='range' min='0' max='1023' value='" + String(ledBrightness) + "' oninput='updateBrightness(this.value)'></p>";
   html += "<script>function updateBrightness(value) { var xhr = new XMLHttpRequest(); xhr.open('GET', '/brightness?value=' + value, true); xhr.send(); }</script>";
   html += "</body></html>";
 
   server.send(200, "text/html", html);
-}
-
-void handleSound() {
-  soundState = !soundState;
-  digitalWrite(soundPin, soundState ? HIGH : LOW);
-  server.send(200, "text/plain", String(soundState ? "Sound On" : "Sound Off"));
 }
 
 void handleLED() {
