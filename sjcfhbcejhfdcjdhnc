@@ -4,16 +4,16 @@
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
 
-const int ledPin = 16;  // Define the LED control pin (make sure it supports PWM)
+const int ledPin = D0; // Define the LED control pin (D0/GPIO16)
 
-int ledBrightness = 0;   // Variable to store LED brightness
-bool ledState = false;   // Variable to store LED state
+bool ledState = false; // Variable to store LED state
 
 ESP8266WebServer server(80);
 
 void setup() {
   Serial.begin(115200); // Start Serial communication for debugging
   pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW); // Initially turn off the LED
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -27,7 +27,6 @@ void setup() {
   // Define web server routes
   server.on("/", HTTP_GET, handleRoot);
   server.on("/led", HTTP_GET, handleLED);
-  server.on("/brightness", HTTP_GET, handleBrightness);
 
   // Start the server
   server.begin();
@@ -41,15 +40,17 @@ void loop() {
 
 void handleRoot() {
   Serial.println("Root endpoint accessed");
-  // Rest of your code remains unchanged...
+  String html = "<html><body>";
+  html += "<h1>Control Page</h1>";
+  html += "<p>LED: <a href='/led'><button>" + String(ledState ? "Turn Off" : "Turn On") + "</button></a></p>";
+  html += "</body></html>";
+
+  server.send(200, "text/html", html);
 }
 
 void handleLED() {
   Serial.println("LED endpoint accessed");
-  // Rest of your code remains unchanged...
-}
-
-void handleBrightness() {
-  Serial.println("Brightness endpoint accessed");
-  // Rest of your code remains unchanged...
+  ledState = !ledState;
+  digitalWrite(ledPin, ledState ? HIGH : LOW);
+  server.send(200, "text/plain", String(ledState ? "LED On" : "LED Off"));
 }
