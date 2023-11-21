@@ -4,7 +4,7 @@
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
 
-const int ledPin = D0; // Define the LED control pin (D0/GPIO16)
+const int ledPin = 16; // Define the LED control pin (D0/GPIO16)
 
 bool ledState = false; // Variable to store LED state
 
@@ -31,6 +31,7 @@ void setup() {
   // Start the server
   server.begin();
   Serial.println("HTTP server started");
+  Serial.println(WiFi.localIP());
 }
 
 void loop() {
