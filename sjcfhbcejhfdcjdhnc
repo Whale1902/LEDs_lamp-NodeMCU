@@ -4,20 +4,19 @@
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
 
+
 const int numLEDs = 18; // Number of LEDs in the strip
 const int ledPin = D2;  // Define the LED control pin (D2/GPIO4)
 
-bool ledStates[numLEDs]; // Array to store the state of each LED in the strip
+int ledBrightness = 255; // Initial brightness value
+int ledColors[3] = {255, 255, 255}; // Initial RGB color (White)
 
 ESP8266WebServer server(80);
 
 void setup() {
   Serial.begin(115200); // Start Serial communication for debugging
   pinMode(ledPin, OUTPUT);
-  for (int i = 0; i < numLEDs; i++) {
-    ledStates[i] = false; // Initialize all LEDs to be off initially
-  }
-
+  
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -29,7 +28,7 @@ void setup() {
   
   // Define web server routes
   server.on("/", HTTP_GET, handleRoot);
-  server.on("/led", HTTP_GET, handleLED);
+  server.on("/set", HTTP_POST, handleSet);
 
   // Start the server
   server.begin();
@@ -45,26 +44,36 @@ void handleRoot() {
   Serial.println("Root endpoint accessed");
   String html = "<html><body>";
   html += "<h1>LED Strip Control</h1>";
-  for (int i = 0; i < numLEDs; i++) {
-    html += "<p>LED " + String(i + 1) + ": <a href='/led?id=" + String(i) + "'><button>" + String(ledStates[i] ? "Turn Off" : "Turn On") + "</button></a></p>";
-  }
+  html += "<form action='/set' method='post'>";
+  html += "<label for='red'>Red (0-255):</label><input type='number' id='red' name='red' min='0' max='255' value='" + String(ledColors[0]) + "'><br>";
+  html += "<label for='green'>Green (0-255):</label><input type='number' id='green' name='green' min='0' max='255' value='" + String(ledColors[1]) + "'><br>";
+  html += "<label for='blue'>Blue (0-255):</label><input type='number' id='blue' name='blue' min='0' max='255' value='" + String(ledColors[2]) + "'><br>";
+  html += "<label for='brightness'>Brightness (0-255):</label><input type='range' id='brightness' name='brightness' min='0' max='255' value='" + String(ledBrightness) + "'><br>";
+  html += "<input type='submit' value='Set LED Color'>";
+  html += "</form>";
   html += "</body></html>";
 
   server.send(200, "text/html", html);
 }
 
-void handleLED() {
-  Serial.println("LED endpoint accessed");
-  if (server.args() > 0) {
-    int ledID = server.arg("id").toInt();
-    if (ledID >= 0 && ledID < numLEDs) {
-      ledStates[ledID] = !ledStates[ledID];
-      digitalWrite(ledPin, ledStates[ledID] ? HIGH : LOW);
-      server.send(200, "text/plain", String("LED ") + String(ledID + 1) + String(ledStates[ledID] ? " On" : " Off"));
-    } else {
-      server.send(400, "text/plain", "Invalid LED ID");
+void handleSet() {
+  Serial.println("Set endpoint accessed");
+  if (server.hasArg("red") && server.hasArg("green") && server.hasArg("blue") && server.hasArg("brightness")) {
+    ledColors[0] = server.arg("red").toInt();
+    ledColors[1] = server.arg("green").toInt();
+    ledColors[2] = server.arg("blue").toInt();
+    ledBrightness = server.arg("brightness").toInt();
+
+    analogWrite(ledPin, ledBrightness);
+    for (int i = 0; i < numLEDs; i++) {
+      analogWrite(ledPin, ledBrightness);
+      analogWrite(ledPin, map(ledColors[0], 0, 255, 0, 1023));
+      analogWrite(ledPin, map(ledColors[1], 0, 255, 0, 1023));
+      analogWrite(ledPin, map(ledColors[2], 0, 255, 0, 1023));
     }
+
+    server.send(200, "text/plain", "LED Color Set");
   } else {
-    server.send(400, "text/plain", "No LED ID provided");
+    server.send(400, "text/plain", "Invalid arguments");
   }
 }
