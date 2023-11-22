@@ -69,8 +69,11 @@ void handleSet() {
     fill_solid(leds, numLEDs, CRGB(red, green, blue));
     FastLED.setBrightness(brightness);
 
-    server.send(200, "text/plain", "LED Color Set");
+    // Prepare the response with a JavaScript redirect to the root endpoint
+    String response = "<script>window.location.replace('/');</script>";
+    server.send(200, "text/html", response);
   } else {
     server.send(400, "text/plain", "Invalid arguments");
   }
 }
+
