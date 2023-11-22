@@ -10,7 +10,6 @@ const int numLEDs = 18; // Number of LEDs in the strip
 const int ledPin = 4;  // Define the LED control pin (D2/GPIO4)
 
 CRGB leds[numLEDs]; // Define FastLED array for LEDs
-uint8_t hue = 0; // Variable to control color transition
 
 ESP8266WebServer server(80);
 
@@ -30,7 +29,6 @@ void setup() {
   // Define web server routes
   server.on("/", HTTP_GET, handleRoot);
   server.on("/set", HTTP_POST, handleSet);
-  server.on("/allledsmode", HTTP_GET, handleAllLedsMode);
 
   // Start the server
   server.begin();
@@ -39,13 +37,9 @@ void setup() {
 
 void loop() {
   server.handleClient();
-
-  // Call function for all LEDs mode
-  allLedsMode();
   FastLED.show(); // Show the updated LED strip
   delay(10); // Small delay for smoother execution (optional)
 }
-
 void handleRoot() {
   Serial.println("Root endpoint accessed");
   String html = "<html><body>";
@@ -58,29 +52,21 @@ void handleRoot() {
   html += "<input type='submit' value='Set LED Color'><br>";
   html += "<button type='button' onclick='setWarmYellow()'>Warm Yellow</button>";
   html += "<button type='button' onclick='setLightWhite()'>Light White</button>";
-  html += "<button type='button' onclick='setAllLedsMode()'>All LEDs Mode</button>"; // Button for all LEDs mode
   html += "</form>";
 
   // JavaScript functions for setting warm yellow and light white colors
   html += "<script>";
   html += "function setWarmYellow() {";
   html += "  document.getElementById('red').value = '255';";
-  html += "  document.getElementById('green').value = '255';";
-  html += "  document.getElementById('blue').value = '150';";
+  html += "  document.getElementById('green').value = '130';";
+  html += "  document.getElementById('blue').value = '0';";
   html += "  document.querySelector('form').submit();"; // Automatically submit the form
   html += "}";
   html += "function setLightWhite() {";
   html += "  document.getElementById('red').value = '255';";
   html += "  document.getElementById('green').value = '255';";
-  html += "  document.getElementById('blue').value = '255';";
+  html += "  document.getElementById('blue').value = '200';";
   html += "  document.querySelector('form').submit();"; // Automatically submit the form
-  html += "}";
-  html += "</script>";
-
-  // JavaScript function to trigger all LEDs mode
-  html += "<script>";
-  html += "function setAllLedsMode() {";
-  html += "  fetch('/allledsmode');"; // Trigger /allledsmode endpoint
   html += "}";
   html += "</script>";
 
@@ -107,20 +93,4 @@ void handleSet() {
   } else {
     server.send(400, "text/plain", "Invalid arguments");
   }
-}
-
-void handleAllLedsMode() {
-  // Enable all LEDs mode
-  // Change hue value to trigger color transition in loop()
-  hue = 0;
-  server.send(200, "text/plain", "All LEDs Mode Enabled");
-}
-
-void allLedsMode() {
-  // Function for gradual color transition for all LEDs
-  fill_solid(leds, numLEDs, CHSV(hue, 255, 255)); // Set color for all LEDs based on hue value
-  hue++; // Increment hue value for next color
-
-  // Delay for a smooth color transition (adjust as needed)
-  delay(50);
 }
