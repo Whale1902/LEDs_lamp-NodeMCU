@@ -40,7 +40,6 @@ void loop() {
   FastLED.show(); // Show the updated LED strip
   delay(10); // Small delay for smoother execution (optional)
 }
-
 void handleRoot() {
   Serial.println("Root endpoint accessed");
   String html = "<html><body>";
@@ -50,8 +49,27 @@ void handleRoot() {
   html += "<label for='green'>Green (0-255):</label><input type='number' id='green' name='green' min='0' max='255' value='" + String(leds[0].g) + "'><br>";
   html += "<label for='blue'>Blue (0-255):</label><input type='number' id='blue' name='blue' min='0' max='255' value='" + String(leds[0].b) + "'><br>";
   html += "<label for='brightness'>Brightness (0-255):</label><input type='range' id='brightness' name='brightness' min='0' max='255' value='" + String(FastLED.getBrightness()) + "'><br>";
-  html += "<input type='submit' value='Set LED Color'>";
+  html += "<input type='submit' value='Set LED Color'><br>";
+  html += "<button type='button' onclick='setWarmYellow()'>Warm Yellow</button>";
+  html += "<button type='button' onclick='setLightWhite()'>Light White</button>";
   html += "</form>";
+
+  // JavaScript functions for setting warm yellow and light white colors
+  html += "<script>";
+  html += "function setWarmYellow() {";
+  html += "  document.getElementById('red').value = '255';";
+  html += "  document.getElementById('green').value = '255';";
+  html += "  document.getElementById('blue').value = '150';";
+  html += "  document.querySelector('form').submit();"; // Automatically submit the form
+  html += "}";
+  html += "function setLightWhite() {";
+  html += "  document.getElementById('red').value = '255';";
+  html += "  document.getElementById('green').value = '255';";
+  html += "  document.getElementById('blue').value = '255';";
+  html += "  document.querySelector('form').submit();"; // Automatically submit the form
+  html += "}";
+  html += "</script>";
+
   html += "</body></html>";
 
   server.send(200, "text/html", html);
