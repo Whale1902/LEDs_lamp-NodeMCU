@@ -42,7 +42,17 @@ void loop() {
 }
 void handleRoot() {
   Serial.println("Root endpoint accessed");
-  String html = "<html><body>";
+  String html = "<html><head>";
+  html += "<style>";
+  html += "body { font-family: Arial, sans-serif; }";
+  html += "h1 { text-align: center; }";
+  html += "form { margin: 0 auto; max-width: 300px; }";
+  html += "label { display: block; margin-bottom: 5px; }";
+  html += "input[type='number'], input[type='range'], input[type='submit'], button { width: 100%; padding: 8px; margin-bottom: 10px; }";
+  html += "button { background-color: #f4f4f4; border: none; color: #333; cursor: pointer; }";
+  html += "button:hover { background-color: #ddd; }";
+  html += "</style>";
+  html += "</head><body>";
   html += "<h1>LED Strip Control</h1>";
   html += "<form action='/set' method='post'>";
   html += "<label for='red'>Red (0-255):</label><input type='number' id='red' name='red' min='0' max='255' value='" + String(leds[0].r) + "'><br>";
