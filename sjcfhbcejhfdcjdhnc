@@ -60,8 +60,9 @@ void handleRoot() {
   html += "<label for='blue'>Blue (0-255):</label><input type='number' id='blue' name='blue' min='0' max='255' value='" + String(leds[0].b) + "'><br>";
   html += "<label for='brightness'>Brightness (0-255):</label><input type='range' id='brightness' name='brightness' min='0' max='255' value='" + String(FastLED.getBrightness()) + "'><br>";
   html += "<input type='submit' value='Set LED Color'><br>";
-  html += "<button type='button' onclick='setWarmYellow()'>Warm Yellow</button>";
-  html += "<button type='button' onclick='setLightWhite()'>Light White</button>";
+  html += "<button type='button' onclick='setWarmYellow()'>Yellow</button>";
+  html += "<button type='button' onclick='setLightWhite()'>White</button>";
+  html += "<button type='button' onclick='turnLEDOff()'>Turn LEDs Off</button>";
   html += "</form>";
 
   // JavaScript functions for setting warm yellow and light white colors
@@ -76,6 +77,12 @@ void handleRoot() {
   html += "  document.getElementById('red').value = '255';";
   html += "  document.getElementById('green').value = '255';";
   html += "  document.getElementById('blue').value = '200';";
+  html += "  document.querySelector('form').submit();"; // Automatically submit the form
+  html += "}";
+  html += "function turnLEDOff() {";
+  html += "  document.getElementById('red').value = '0';";
+  html += "  document.getElementById('green').value = '0';";
+  html += "  document.getElementById('blue').value = '0';";
   html += "  document.querySelector('form').submit();"; // Automatically submit the form
   html += "}";
   html += "</script>";
