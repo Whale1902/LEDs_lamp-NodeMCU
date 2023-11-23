@@ -104,7 +104,7 @@ void handleRoot() {
 
 void handleReadAnalog() {
   int adcValue = analogRead(A0); // Read analog value from ADC pin (A0)
-  float voltage = adcValue * (5.0 / 1023.0); // Convert ADC reading to voltage (assuming 5V reference)
+  float voltage = adcValue * (4.2 / 1023.0); // Convert ADC reading to voltage (assuming 5V reference)
 
   Serial.print("ADC Value: ");
   Serial.print(adcValue);
@@ -113,7 +113,7 @@ void handleReadAnalog() {
   Serial.println("V");
 
   String response = "<script>window.location.replace('/');</script>";
-  server.send(200, "text/plain", "Analog data read and logged in Serial Monitor");
+  server.send(200, "text/html", response);
 }
 
 void handleSet() {
