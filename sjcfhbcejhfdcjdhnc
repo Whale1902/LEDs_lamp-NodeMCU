@@ -29,6 +29,7 @@ void setup() {
   // Define web server routes
   server.on("/", HTTP_GET, handleRoot);
   server.on("/set", HTTP_POST, handleSet);
+  server.on("/readanalog", HTTP_GET, handleReadAnalog);
 
   // Start the server
   server.begin();
@@ -40,6 +41,7 @@ void loop() {
   FastLED.show(); // Show the updated LED strip
   delay(10); // Small delay for smoother execution (optional)
 }
+
 void handleRoot() {
   Serial.println("Root endpoint accessed");
   String html = "<html><head>";
@@ -63,6 +65,7 @@ void handleRoot() {
   html += "<button type='button' onclick='setWarmYellow()'>Yellow</button>";
   html += "<button type='button' onclick='setLightWhite()'>White</button>";
   html += "<button type='button' onclick='turnLEDOff()'>Turn LEDs Off</button>";
+  html += "<button type='button' onclick='readAnalogData()'>Read Analog Data</button>";
   html += "</form>";
 
   // JavaScript functions for setting warm yellow and light white colors
@@ -87,9 +90,30 @@ void handleRoot() {
   html += "}";
   html += "</script>";
 
+  // JavaScript function to trigger reading analog data
+  html += "<script>";
+  html += "function readAnalogData() {";
+  html += "  fetch('/readanalog');"; // Trigger '/readanalog' endpoint
+  html += "}";
+  html += "</script>";
+
   html += "</body></html>";
 
   server.send(200, "text/html", html);
+}
+
+void handleReadAnalog() {
+  int adcValue = analogRead(A0); // Read analog value from ADC pin (A0)
+  float voltage = adcValue * (5.0 / 1023.0); // Convert ADC reading to voltage (assuming 5V reference)
+
+  Serial.print("ADC Value: ");
+  Serial.print(adcValue);
+  Serial.print(", Voltage: ");
+  Serial.print(voltage, 3); // Display voltage with 3 decimal places
+  Serial.println("V");
+
+  String response = "<script>window.location.replace('/');</script>";
+  server.send(200, "text/plain", "Analog data read and logged in Serial Monitor");
 }
 
 void handleSet() {
