@@ -90,10 +90,14 @@ void handleRoot() {
   html += "}";
   html += "</script>";
 
-  // JavaScript function to trigger reading analog data
+ // JavaScript function to trigger reading analog data
   html += "<script>";
   html += "function readAnalogData() {";
-  html += "  fetch('/readanalog');"; // Trigger '/readanalog' endpoint
+  html += "  fetch('/readanalog')"
+  html += "    .then(response => response.text())" // Get response text (voltage info)
+  html += "    .then(data => {" // Display voltage info on the button text
+  html += "      document.querySelector('button').innerText = 'Voltage: ' + data + 'V';" // Update button text
+  html += "    });";
   html += "}";
   html += "</script>";
 
