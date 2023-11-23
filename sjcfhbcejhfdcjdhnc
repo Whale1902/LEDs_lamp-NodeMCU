@@ -103,22 +103,15 @@ void handleRoot() {
 }
 
 void handleReadAnalog() {
-  int adcValue = analogRead(A0); // Read analog value from ADC pin (A0)
-  float voltage = adcValue * (4.2 / 1023.0); // Calculate voltage assuming 4.2V reference (after divider)
-
-  // Adjust the calculated R2 based on the known real voltage
-  float measuredVoltage = 5.9; // Replace with the voltage read by the NodeMCU
-  float realVoltage = 3.689; // Replace with the actual measured voltage
-  float R1 = 12.0; // Replace with the resistance value of R1 (in kΩ)
-  float R2 = (voltage * R1) / (measuredVoltage - voltage);
-
-  float realBatteryVoltage = voltage * ((R1 + R2) / R2); // Calculate the real battery voltage
+  int adcValue = analogRead(A0); 
+  float realVoltage = adcValue * (0.9 / 1023) * 100;
 
   Serial.print("ADC Value: ");
   Serial.print(adcValue);
-  Serial.print(", Real Battery Voltage: ");
-  Serial.print(realBatteryVoltage, 3); // Display real battery voltage with 3 decimal places
-  Serial.println("V");
+  Serial.print(", Real Voltage is ");
+  Serial.print(realVoltage);
+  Serial.println("%");
+  
 
   String response = "<script>window.location.replace('/');</script>";
   server.send(200, "text/html", response);
