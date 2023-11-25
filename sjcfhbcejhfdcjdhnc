@@ -5,7 +5,6 @@
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
 
-
 const int numLEDs = 18; // Number of LEDs in the strip
 const int ledPin = 4;  // Define the LED control pin (D2/GPIO4)
 
@@ -42,7 +41,7 @@ void loop() {
   delay(10); // Small delay for smoother execution (optional)
 }
 
-float realVoltage = 0;
+float batteryPercent = 0;
 
 void handleRoot() {
   Serial.println("Root endpoint accessed");
@@ -57,7 +56,7 @@ void handleRoot() {
   html += "button:hover { background-color: #ddd; }";
   html += "</style>";
   html += "</head><body>";
-  html += "<h1>LED Strip Control</h1>";
+  html += "<h1>Battery:" + String(batteryPercent, 2) + "%</h1>";
   html += "<form action='/set' method='post'>";
   html += "<label for='red'>Red (0-255):</label><input type='number' id='red' name='red' min='0' max='255' value='" + String(leds[0].r) + "'><br>";
   html += "<label for='green'>Green (0-255):</label><input type='number' id='green' name='green' min='0' max='255' value='" + String(leds[0].g) + "'><br>";
@@ -67,14 +66,14 @@ void handleRoot() {
   html += "<button type='button' onclick='setWarmYellow()'>Yellow</button>";
   html += "<button type='button' onclick='setLightWhite()'>White</button>";
   html += "<button type='button' onclick='turnLEDOff()'>Turn LEDs Off</button>";
-  html += "<button type='button' id='percent' onclick='readAnalogData()'> Battery: " + String(realVoltage) + "% </button>";
+  html += "<button type='button' id='percent' onclick='readAnalogData()'>Check battery</button>";
   html += "</form>";
 
   // JavaScript functions for setting warm yellow and light white colors
   html += "<script>";
   html += "function setWarmYellow() {";
   html += "  document.getElementById('red').value = '255';";
-  html += "  document.getElementById('green').value = '130';";
+  html += "  document.getElementById('green').value = '80';";
   html += "  document.getElementById('blue').value = '0';";
   html += "  document.querySelector('form').submit();"; // Automatically submit the form
   html += "}";
@@ -95,11 +94,12 @@ void handleRoot() {
  // JavaScript function to trigger reading analog data
   html += "<script>";
   html += "function readAnalogData() {";
-  html += "  fetch('/readanalog');";
-  // html += "    .then(response => response.text())"; // Get response text (voltage info)
-  // html += "    .then(data => {"; // Display voltage info on the button text
-  // html += "      document.querySelector('#button').innerText = 'Voltage: ' + data + '%';"; // Update button text
-  // html += "    });";
+  html += "  fetch('/readanalog')";
+  html += "    .then(response => response.text())"; // Get response text (voltage info)
+  html += "    .then(data => {"; // Display voltage info on the button text
+  html += "      document.querySelector('#percent').innerText = 'Battery: ' + data + '%';"; // Update button text
+  html += "      document.querySelector('h1').innerText = 'Battery: ' + data + '%';"; // Update Header text
+  html += "    });";
   html += "}";
   html += "</script>";
 
@@ -108,22 +108,36 @@ void handleRoot() {
   server.send(200, "text/html", html);
 }
 
-
-
 void handleReadAnalog() {
+  float calibrationFactor = 0.923; 
+
+  // Get raw analog data
   int adcValue = analogRead(A0); 
-  realVoltage = adcValue * (0.9 / 1023) * 100;
+  float rawVoltage = (adcValue / 1023.0) * 3.3; 
 
-  Serial.print("ADC Value: ");
-  Serial.print(adcValue);
-  Serial.print(", Real Voltage is ");
-  Serial.print(realVoltage);
-  Serial.println("%");
+  // Calibrating raw data to be more presice
+  float voltageAfterDividing = rawVoltage * calibrationFactor;
+  float voltageBeforeDividing = voltageAfterDividing * 6.4;
+
+  // Map the calibrated voltage to the percentage range (2.7V to 4.2V -> 0% to 100%)
+  batteryPercent = (map(voltageBeforeDividing * 100, 270, 420, 0, 100) / 100.0) * 100.0;
   
-  // String voltageString = String(realVoltage, 3);
+  // Print results to the Serial Monitor
+  Serial.print("ADC: ");
+  Serial.print(adcValue);
+  Serial.print(", Voltage after dividing: ");
+  Serial.print(voltageAfterDividing);
+  Serial.print("V, Voltage before dividing: ");
+  Serial.print(voltageBeforeDividing);
+  Serial.print("V.");
+  Serial.print(" Battery charge is: ");
+  Serial.print(batteryPercent);
+  Serial.println("%.");
 
-  String response = "<script>window.location.replace('/');</script>";
-  server.send(200, "text/html", response);
+  // Convert calibrated voltage to String with 3 decimal places
+  String stringBatteryPercent = String(batteryPercent, 2);
+
+  server.send(200, "text/plain", stringBatteryPercent);
 }
 
 void handleSet() {
