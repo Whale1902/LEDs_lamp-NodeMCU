@@ -5,7 +5,7 @@
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
 
-const int numLEDs = 18; // Number of LEDs in the strip
+const int numLEDs = 17; // Number of LEDs in the strip
 const int ledPin = 4;  // Define the LED control pin (D2/GPIO4)
 
 CRGB leds[numLEDs]; // Define FastLED array for LEDs
@@ -42,6 +42,7 @@ void loop() {
 }
 
 float batteryPercent = 0;
+String imageString = "data:image/png;base64,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";
 
 void handleRoot() {
   Serial.println("Root endpoint accessed");
@@ -55,6 +56,10 @@ void handleRoot() {
   html += "button { background-color: #f4f4f4; border: none; color: #333; cursor: pointer; }";
   html += "button:hover { background-color: #ddd; }";
   html += "</style>";
+  html += "<title>LED Controller</title>";
+  html += "<link rel='icon' href='";
+  html += imageString;
+  html += "' type='image/x-icon'>";
   html += "</head><body>";
   html += "<h1>Battery:" + String(batteryPercent, 2) + "%</h1>";
   html += "<form action='/set' method='post'>";
