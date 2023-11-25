@@ -42,6 +42,8 @@ void loop() {
   delay(10); // Small delay for smoother execution (optional)
 }
 
+float realVoltage = 0;
+
 void handleRoot() {
   Serial.println("Root endpoint accessed");
   String html = "<html><head>";
@@ -65,7 +67,7 @@ void handleRoot() {
   html += "<button type='button' onclick='setWarmYellow()'>Yellow</button>";
   html += "<button type='button' onclick='setLightWhite()'>White</button>";
   html += "<button type='button' onclick='turnLEDOff()'>Turn LEDs Off</button>";
-  html += "<button type='button' onclick='readAnalogData()'>Read Analog Data</button>";
+  html += "<button type='button' id='percent' onclick='readAnalogData()'> Battery: " + String(realVoltage) + "% </button>";
   html += "</form>";
 
   // JavaScript functions for setting warm yellow and light white colors
@@ -93,11 +95,11 @@ void handleRoot() {
  // JavaScript function to trigger reading analog data
   html += "<script>";
   html += "function readAnalogData() {";
-  html += "  fetch('/readanalog')"
-  html += "    .then(response => response.text())" // Get response text (voltage info)
-  html += "    .then(data => {" // Display voltage info on the button text
-  html += "      document.querySelector('button').innerText = 'Voltage: ' + data + 'V';" // Update button text
-  html += "    });";
+  html += "  fetch('/readanalog');";
+  // html += "    .then(response => response.text())"; // Get response text (voltage info)
+  // html += "    .then(data => {"; // Display voltage info on the button text
+  // html += "      document.querySelector('#button').innerText = 'Voltage: ' + data + '%';"; // Update button text
+  // html += "    });";
   html += "}";
   html += "</script>";
 
@@ -106,9 +108,11 @@ void handleRoot() {
   server.send(200, "text/html", html);
 }
 
+
+
 void handleReadAnalog() {
   int adcValue = analogRead(A0); 
-  float realVoltage = adcValue * (0.9 / 1023) * 100;
+  realVoltage = adcValue * (0.9 / 1023) * 100;
 
   Serial.print("ADC Value: ");
   Serial.print(adcValue);
@@ -116,6 +120,7 @@ void handleReadAnalog() {
   Serial.print(realVoltage);
   Serial.println("%");
   
+  // String voltageString = String(realVoltage, 3);
 
   String response = "<script>window.location.replace('/');</script>";
   server.send(200, "text/html", response);
