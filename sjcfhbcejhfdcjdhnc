@@ -5,7 +5,7 @@
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
 
-const int numLEDs = 17; // Number of LEDs in the strip
+const int numLEDs = 18; // Number of LEDs in the strip
 const int ledPin = 4;  // Define the LED control pin (D2/GPIO4)
 
 CRGB leds[numLEDs]; // Define FastLED array for LEDs
@@ -114,7 +114,7 @@ void handleRoot() {
 }
 
 void handleReadAnalog() {
-  float calibrationFactor = 0.923; 
+  float calibrationFactor = 0.937596899; 
 
   // Get raw analog data
   int adcValue = analogRead(A0); 
@@ -122,7 +122,7 @@ void handleReadAnalog() {
 
   // Calibrating raw data to be more presice
   float voltageAfterDividing = rawVoltage * calibrationFactor;
-  float voltageBeforeDividing = voltageAfterDividing * 6.4;
+  float voltageBeforeDividing = voltageAfterDividing * 1.7;
 
   // Map the calibrated voltage to the percentage range (2.7V to 4.2V -> 0% to 100%)
   batteryPercent = (map(voltageBeforeDividing * 100, 270, 420, 0, 100) / 100.0) * 100.0;
@@ -130,12 +130,14 @@ void handleReadAnalog() {
   // Print results to the Serial Monitor
   Serial.print("ADC: ");
   Serial.print(adcValue);
-  Serial.print(", Voltage after dividing: ");
+  Serial.print(". Raw (AD): ");
+  Serial.print(rawVoltage);
+  Serial.print("V. Calibrated (AD): ");
   Serial.print(voltageAfterDividing);
-  Serial.print("V, Voltage before dividing: ");
+  Serial.print("V, Calibrated (BD): ");
   Serial.print(voltageBeforeDividing);
   Serial.print("V.");
-  Serial.print(" Battery charge is: ");
+  Serial.print(" TEST Battery: ");
   Serial.print(batteryPercent);
   Serial.println("%.");
 
