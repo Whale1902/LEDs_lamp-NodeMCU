@@ -48,31 +48,84 @@ void handleRoot() {
   Serial.println("Root endpoint accessed");
   String html = "<html><head>";
   html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
+
+
   html += "<style>";
   html += "body { font-family: Arial, sans-serif; margin: 0; padding: 0; }";
   html += "h1 { text-align: center; }";
-  html += "form { width: 100%; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }";
+  html += "form { width: 50%; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }";
   html += "label, input[type='number'], input[type='range'], input[type='submit'], button { width: 80%; padding: 8px; margin-bottom: 10px; }";
-  html += "button { background-color: #f4f4f4; border: none; color: #333; cursor: pointer; }";
+  html += ".input-group { width: 80%; display: flex; justify-content: space-between; }";
+  html += ".input-group input[type='number'] { flex: 1; margin: 0 5px; }";
+  html += "button { width: 80%; padding: 10px; margin-bottom: 10px; cursor: pointer; }"; // Adjust button width and padding
+  html += "#setColorBtn { background-color: blue; color: white; }"; // Set LED Color button styling
+  html += ".action-buttons button { width: 100%; font-size: 16px; }"; // Adjust other buttons
   html += "button:hover { background-color: #ddd; }";
+  html += "table { width: 80%; border-collapse: collapse; margin-top: 20px; }";
+  html += "th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }";
+  html += "@media only screen and (max-width: 600px) {";
+  html += "form { width: 90%; }";
+  html += "}";
   html += "</style>";
+
   html += "<title>LED Controller</title>";
-  html += "<link rel='icon' href='";
-  html += imageString;
-  html += "' type='image/x-icon'>";
+  html += "<link rel='icon' href='" + imageString + "' type='image/x-icon'>";
   html += "</head><body>";
   html += "<h1>Battery:" + String(batteryPercent, 2) + "%</h1>";
   html += "<form action='/set' method='post'>";
-  html += "<label for='red'>Red (0-255):</label><input type='number' id='red' name='red' min='0' max='255' value='" + String(leds[0].r) + "'><br>";
-  html += "<label for='green'>Green (0-255):</label><input type='number' id='green' name='green' min='0' max='255' value='" + String(leds[0].g) + "'><br>";
-  html += "<label for='blue'>Blue (0-255):</label><input type='number' id='blue' name='blue' min='0' max='255' value='" + String(leds[0].b) + "'><br>";
+
+
+  // html += "<label for='red'>Red (0-255):</label><input type='number' id='red' name='red' min='0' max='255' value='" + String(leds[0].r) + "'><br>";
+  // html += "<label for='green'>Green (0-255):</label><input type='number' id='green' name='green' min='0' max='255' value='" + String(leds[0].g) + "'><br>";
+  // html += "<label for='blue'>Blue (0-255):</label><input type='number' id='blue' name='blue' min='0' max='255' value='" + String(leds[0].b) + "'><br>";
+
+  html += "<div class='input-group'>";
+  html += "<input type='number' id='red' name='red' min='0' max='255' value='" + String(leds[0].r) + "'>";
+  html += "<input type='number' id='green' name='green' min='0' max='255' value='" + String(leds[0].g) + "'>";
+  html += "<input type='number' id='blue' name='blue' min='0' max='255' value='" + String(leds[0].b) + "'>";
+  html += "</div>";
+
   html += "<label for='brightness'>Brightness (0-255):</label><input type='range' id='brightness' name='brightness' min='0' max='255' value='" + String(FastLED.getBrightness()) + "'><br>";
-  html += "<input type='submit' value='Set LED Color'><br>";
-  html += "<button type='button' onclick='setWarmYellow()'>Yellow</button>";
-  html += "<button type='button' onclick='setLightWhite()'>White</button>";
-  html += "<button type='button' onclick='turnLEDOff()'>Turn LEDs Off</button>";
-  html += "<button type='button' id='percent' onclick='readAnalogData()'>Check battery</button>";
+
+  html += "<button type='submit' id='setColorBtn'>Set LED Color</button>"; 
+  html += "<div class='action-buttons'>";
+  html += "<button type='button' onclick='setWarmYellow()' style='font-size: 18px;'>Yellow</button>";
+  html += "<button type='button' onclick='setLightWhite()' style='font-size: 18px;'>White</button>";
+  html += "<button type='button' onclick='turnLEDOff()' style='font-size: 18px;'>Turn LEDs Off</button>";
+  html += "<button type='button' id='percent' onclick='readAnalogData()' style='font-size: 18px;'>Check battery</button>";
+  html += "</div>";
+
+  // Table to display voltage readings (initially empty)
+  html += "<table id='voltageTable'>";
+  html += "<tr><th>Key</th><th>Value</th></tr>";
+  html += "<tr><td>Readings ADC</td><td>123</td></tr>";
+  html += "<tr><td>Readings Voltage</td><td>3.8V</td></tr>";
+  html += "<tr><td>Calibrated Voltage After Dividing</td><td>2.6V</td></tr>";
+  html += "<tr><td>Calibrated Voltage Before Dividing</td><td>3.0V</td></tr>";
+  html += "<tr><td>Calculated Battery Charge</td><td>85%</td></tr>";
+  html += "</table>";
+
   html += "</form>";
+  html += "<script>";
+  html += "function readAnalogData() {";
+  // Add your logic here to fetch voltage data using JavaScript (AJAX/fetch request)
+  // Once you have the data, populate the table rows dynamically
+  // Example:
+  html += "const voltageData = {";
+  html += "adcReadings: '123',";
+  html += "voltageReadings: '3.8V',";
+  html += "calibratedVoltageAfterDividing: '2.6V',";
+  html += "calibratedVoltageBeforeDividing: '3.0V',";
+  html += "calculatedBatteryCharge: '85%'";
+  html += "};";
+  html += "const table = document.getElementById('voltageTable');";
+  html += "const newRow = table.insertRow(-1);";
+  html += "for (const key in voltageData) {";
+  html += "const cell = newRow.insertCell();";
+  html += "cell.textContent = voltageData[key];";
+  html += "}";
+  html += "}";
+  html += "</script>";
 
   // JavaScript functions for setting warm yellow and light white colors
   html += "<script>";
