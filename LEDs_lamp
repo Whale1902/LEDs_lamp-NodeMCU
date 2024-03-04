@@ -1,3 +1,5 @@
+// Board: NodeMCU 1.0 (ESP-12E Modue)
+
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <FastLED.h>
@@ -35,10 +37,24 @@ void setup() {
   Serial.println("HTTP server started");
 }
 
+// Timer thingi
+unsigned long previousMillis = 0;   // Stores the last time the timer was updated
+const long interval = 30000;         // Interval for the timer in milliseconds
+
+void timerFunc() {
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= interval) {
+    // Save the last time the timer was triggered
+    previousMillis = currentMillis;
+  }
+}
+
 void loop() {
   server.handleClient();
   FastLED.show(); // Show the updated LED strip
   delay(10); // Small delay for smoother execution (optional)
+
+  timerFunc();
 }
 
 float batteryPercent = 0;
