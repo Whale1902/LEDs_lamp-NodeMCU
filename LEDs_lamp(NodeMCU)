@@ -3,20 +3,21 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <FastLED.h>
+#include <ArduinoJson.h>
 
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
 
-const int numLEDs = 18; // Number of LEDs in the strip
-const int ledPin = 4;  // Define the LED control pin (D2/GPIO4)
+const int numLEDs = 18;  // Number of LEDs in the strip
+const int ledPin = 4;    // Define the LED control pin (D2/GPIO4)
 
-CRGB leds[numLEDs]; // Define FastLED array for LEDs
+CRGB leds[numLEDs];  // Define FastLED array for LEDs
 
 ESP8266WebServer server(80);
 
 void setup() {
-  Serial.begin(115200); // Start Serial communication for debugging
-  FastLED.addLeds<WS2812B, D2, GRB>(leds, numLEDs); // Define LED strip type and pin
+  Serial.begin(115200);                              // Start Serial communication for debugging
+  FastLED.addLeds<WS2812B, D2, GRB>(leds, numLEDs);  // Define LED strip type and pin
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -24,9 +25,9 @@ void setup() {
     delay(1000);
     Serial.println("Connecting to WiFi...");
   }
-  
+
   Serial.println("Connected to WiFi");
-  
+
   // Define web server routes
   server.on("/", HTTP_GET, handleRoot);
   server.on("/set", HTTP_POST, handleSet);
@@ -38,8 +39,8 @@ void setup() {
 }
 
 // Timer thingi
-unsigned long previousMillis = 0;   // Stores the last time the timer was updated
-const long interval = 30000;         // Interval for the timer in milliseconds
+unsigned long previousMillis = 0;  // Stores the last time the timer was updated
+const long interval = 30000;       // Interval for the timer in milliseconds
 
 void timerFunc() {
   unsigned long currentMillis = millis();
@@ -51,8 +52,8 @@ void timerFunc() {
 
 void loop() {
   server.handleClient();
-  FastLED.show(); // Show the updated LED strip
-  delay(10); // Small delay for smoother execution (optional)
+  FastLED.show();  // Show the updated LED strip
+  delay(10);       // Small delay for smoother execution (optional)
 
   timerFunc();
 }
@@ -62,132 +63,332 @@ String imageString = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYA
 
 void handleRoot() {
   Serial.println("Root endpoint accessed");
-  String html = "<html><head>";
-  html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
-
+  String html = "<!DOCTYPE html>";
+  html += "<html lang='en'>";
+  html += "<head>";
+  html += "<meta charset='UTF-8'/>";
+  html += "<meta name='viewport' content='width=device-width, initial scale=1.0'/>";
+  html += " <title>LED Controller</title>";
+  html += "<link";
+  html += "href='https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap'";
+  html += "/>";
+  html += "<link rel='icon' href='" + imageString + "' type='image/x-icon'>";
+  html += "</head>";
 
   html += "<style>";
-  html += "body { font-family: Arial, sans-serif; margin: 0; padding: 0; }";
-  html += "h1 { text-align: center; }";
-  html += "form { width: 50%; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }";
-  html += "label, input[type='number'], input[type='range'], input[type='submit'], button { width: 80%; padding: 8px; margin-bottom: 10px; }";
-  html += ".input-group { width: 80%; display: flex; justify-content: space-between; }";
-  html += ".input-group input[type='number'] { flex: 1; margin: 0 5px; }";
-  html += "button { width: 80%; padding: 10px; margin-bottom: 10px; cursor: pointer; }"; // Adjust button width and padding
-  html += "#setColorBtn { background-color: blue; color: white; }"; // Set LED Color button styling
-  html += ".action-buttons button { width: 100%; font-size: 16px; }"; // Adjust other buttons
-  html += "button:hover { background-color: #ddd; }";
-  html += "table { width: 80%; border-collapse: collapse; margin-top: 20px; }";
-  html += "th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }";
+  html += "body {";
+  html += "font-family: 'Quicksand', sans-serif;";
+  html += "font-optical-sizing: auto;";
+  html += "font-weight: 400;";
+  html += "font-style: normal;";
+  html += "padding: 0;";
+  html += "display: flex;";
+  html += "flex-direction: column;";
+  html += "width: 50%;";
+  html += "margin: auto;";
+  html += "background-color: #fffff3;";
+  html += "}";
+  html += "input::-webkit-outer-spin-button,";
+  html += "input::-webkit-inner-spin-button {";
+  html += "-webkit-appearance: none;";
+  html += "margin: 0;";
+  html += "}";
+  html += "input[type='number'] {";
+  html += "-moz-appearance: textfield;";
+  html += "text-align: center;";
+  html += "}";
+  html += "h1 {";
+  html += "padding-right: 10px;";
+  html += "font-size: 30px;";
+  html += "}";
+  html += "input {";
+  html += "border-radius: 2rem;";
+  html += "border-style: solid;";
+  html += "border-width: 1px;";
+  html += "border-color: #00000034;";
+  html += "}";
+  html += "input:focus {";
+  html += "border-radius: 2rem;";
+  html += "}";
+  html += "#red:focus {";
+  html += "outline: 0px;";
+  html += "box-shadow: 1px 3px 3px rgba(255, 0, 0, 0.5);";
+  html += "}";
+  html += "#green:focus {";
+  html += "outline: 0px;";
+  html += "box-shadow: 1px 3px 3px rgba(57, 255, 47, 0.5);";
+  html += "}";
+  html += "#blue:focus {";
+  html += "outline: 0px;";
+  html += "box-shadow: 1px 3px 3px rgba(0, 0, 255, 0.5);";
+  html += "}";
+  html += "header {";
+  html += "display: flex;";
+  html += "flex-wrap: wrap;";
+  html += "justify-content: center;";
+  html += "align-items: center;";
+  html += "row-gap: 10px;";
+  html += "}";
+  html += "#percent {";
+  html += "width: 100px;";
+  html += "/* font-weight: 800; */";
+  html += "font-size: large;";
+  html += "}";
+  html += "form {";
+  html += "display: flex;";
+  html += "justify-content: space-between;";
+  html += "padding: 25px 0;";
+  html += "}";
+  html += ".leftside {";
+  html += "width: 80%;";
+  html += "padding-right: 20px;";
+  html += "}";
+  html += "#setColorBtn {";
+  html += "border-radius: 30px;";
+  html += "width: 100px;";
+  html += "height: 100px;";
+  html += "padding: 0;";
+  html += "border: none;";
+  html += "font-size: large;";
+  html += "}";
+  html += "#brightness {";
+  html += "width: 100%;";
+  html += "padding: 10px 0;";
+  html += "}";
+  html += "label,";
+  html += "input[type='number'],";
+  html += "input[type='range'],";
+  html += "input[type='submit'],";
+  html += "button {";
+  html += "width: 80%;";
+  html += "padding: 8px;";
+  html += "font-size: 15px;";
+  html += "}";
+  html += ".input-group {";
+  html += "display: flex;";
+  html += "justify-content: space-between;";
+  html += "padding: 10px 0;";
+  html += "}";
+  html += ".input-group input[type='number'] {";
+  html += "flex: 1;";
+  html += "margin: 0 5px;";
+  html += "}";
+  html += ".action-buttons {";
+  html += "display: flex;";
+  html += "justify-content: space-between;";
+  html += "padding: 25px 0;";
+  html += "}";
+  html += ".action-buttons button:nth-of-type(2) {";
+  html += "margin: 0 20px;";
+  html += "}";
+  html += "button {";
+  html += "border-radius: 25px;";
+  html += "border-width: 0;";
+  html += "outline: 0px;";
+  html += "cursor: pointer;";
+  html += "background-color: #bad7f2;";
+  html += "padding: 15px 0;";
+  html += "marin: 15px 0;";
+  html += "}";
+  html += "button:hover {";
+  html += "background-color: #496ddb;";
+  html += "color: white;";
+  html += "}";
+  html += "table {";
+  html += "border-collapse: collapse;";
+  html += "margin-top: 25px;";
+  html += "display: flex;";
+  html += "flex-direction: column;";
+  html += "width: 100%;";
+  html += "}";
+  html += "tr {";
+  html += "display: flex;";
+  html += "justify-content: space-between;";
+  html += "margin-bottom: 10px;";
+  html += "border-bottom: 1px solid gray;";
+  html += "}";
   html += "@media only screen and (max-width: 600px) {";
-  html += "form { width: 90%; }";
+  html += "form {";
+  html += "width: 90%;";
+  html += "}";
   html += "}";
   html += "</style>";
 
-  html += "<title>LED Controller</title>";
-  html += "<link rel='icon' href='" + imageString + "' type='image/x-icon'>";
-  html += "</head><body>";
-  html += "<h1>Battery:" + String(batteryPercent, 2) + "%</h1>";
-  html += "<form action='/set' method='post'>";
-
-
-  // html += "<label for='red'>Red (0-255):</label><input type='number' id='red' name='red' min='0' max='255' value='" + String(leds[0].r) + "'><br>";
-  // html += "<label for='green'>Green (0-255):</label><input type='number' id='green' name='green' min='0' max='255' value='" + String(leds[0].g) + "'><br>";
-  // html += "<label for='blue'>Blue (0-255):</label><input type='number' id='blue' name='blue' min='0' max='255' value='" + String(leds[0].b) + "'><br>";
-
+  html += "</head>";
+  html += "<body>";
+  html += "<header>";
+  html += "<h1>BATTERY:</h1>";
+  html += "<button type='button' id='percent' onclick='readAnalogData()'>";
+  html += "CHECK";
+  html += "</button>";
+  html += "</header>";
+  html += "<form id='myForm' action='/set' method='post'>";
+  html += "<div class='leftside'>";
   html += "<div class='input-group'>";
-  html += "<input type='number' id='red' name='red' min='0' max='255' value='" + String(leds[0].r) + "'>";
-  html += "<input type='number' id='green' name='green' min='0' max='255' value='" + String(leds[0].g) + "'>";
-  html += "<input type='number' id='blue' name='blue' min='0' max='255' value='" + String(leds[0].b) + "'>";
+  html += "<input ";
+  html += "type='number' ";
+  html += "id='red' ";
+  html += "name='red' ";
+  html += "min='0' ";
+  html += "max='255' ";
+  html += "value='" + String(leds[0].r) + "' ";
+  html += "placeholder='RED' ";
+  html += "/>";
+  html += "<input ";
+  html += "type='number' ";
+  html += "id='green'";
+  html += "name='green'";
+  html += "min='0'";
+  html += "max='255'";
+  html += "value='" + String(leds[0].g) + "'";
+  html += "placeholder='GREEN'";
+  html += "/>";
+  html += "<input ";
+  html += "type='number'";
+  html += "id='blue'";
+  html += "name='blue'";
+  html += "min='0'";
+  html += "max='255'";
+  html += "value='" + String(leds[0].b) + "'";
+  html += "placeholder='BLUE'";
+  html += "/>";
   html += "</div>";
-
-  html += "<label for='brightness'>Brightness (0-255):</label><input type='range' id='brightness' name='brightness' min='0' max='255' value='" + String(FastLED.getBrightness()) + "'><br>";
-
-  html += "<button type='submit' id='setColorBtn'>Set LED Color</button>"; 
+  html += "<div class='brightness - slider'>";
+  html += "<input ";
+  html += "type='range'";
+  html += "id='brightness'";
+  html += "name='brightness'";
+  html += "min='0'";
+  html += "max='255'";
+  html += "value='" + String(FastLED.getBrightness()) + "'";
+  html += "/>";
+  html += "</div>";
+  html += "</div>";
+  html += "<button type='submit' id='setColorBtn'>SET</button>";
+  html += "</form>";
   html += "<div class='action-buttons'>";
-  html += "<button type='button' onclick='setWarmYellow()' style='font-size: 18px;'>Yellow</button>";
-  html += "<button type='button' onclick='setLightWhite()' style='font-size: 18px;'>White</button>";
-  html += "<button type='button' onclick='turnLEDOff()' style='font-size: 18px;'>Turn LEDs Off</button>";
-  html += "<button type='button' id='percent' onclick='readAnalogData()' style='font-size: 18px;'>Check battery</button>";
+  html += "<button type='button' onclick='setWarmYellow()'>YELLOW</button>";
+  html += "<button type='button' onclick='setLightWhite()'>WHITE</button>";
+  html += "<button type='button' onclick='turnLEDOff()'>TURN OFF</button>";
   html += "</div>";
-
-  // Table to display voltage readings (initially empty)
   html += "<table id='voltageTable'>";
-  html += "<tr><th>Key</th><th>Value</th></tr>";
-  html += "<tr><td>Readings ADC</td><td>123</td></tr>";
-  html += "<tr><td>Readings Voltage</td><td>3.8V</td></tr>";
-  html += "<tr><td>Calibrated Voltage After Dividing</td><td>2.6V</td></tr>";
-  html += "<tr><td>Calibrated Voltage Before Dividing</td><td>3.0V</td></tr>";
-  html += "<tr><td>Calculated Battery Charge</td><td>85%</td></tr>";
+  html += "<tr>";
+  html += "<td>Readings ADC</td>";
+  html += "<td id='readings_adc'>123</td>";
+  html += "</tr>";
+  html += "<tr>";
+  html += "<td>Readings Voltage</td>";
+  html += "<td id='readings_voltage'>3.8V</td>";
+  html += "</tr>";
+  html += "<tr>";
+  html += "<td>Calibrated Voltage After Dividing</td>";
+  html += "<td id='calibrated_voltage_after_dividing'>2.6V</td>";
+  html += "</tr>";
+  html += "<tr>";
+  html += "<td>Calibrated Voltage Before Dividing</td>";
+  html += "<td id='calibrated_voltage_before_dividing'>3.0V</td>";
+  html += "</tr>";
+  html += "<tr>";
+  html += "<td>Calculated Battery Charge</td>";
+  html += "<td id='calculated_battery_charge'>85%</td>";
+  html += "</tr>";
   html += "</table>";
 
-  html += "</form>";
   html += "<script>";
   html += "function readAnalogData() {";
-  // Add your logic here to fetch voltage data using JavaScript (AJAX/fetch request)
-  // Once you have the data, populate the table rows dynamically
-  // Example:
   html += "const voltageData = {";
   html += "adcReadings: '123',";
   html += "voltageReadings: '3.8V',";
   html += "calibratedVoltageAfterDividing: '2.6V',";
   html += "calibratedVoltageBeforeDividing: '3.0V',";
-  html += "calculatedBatteryCharge: '85%'";
+  html += "calculatedBatteryCharge: '85 %',";
   html += "};";
   html += "const table = document.getElementById('voltageTable');";
   html += "const newRow = table.insertRow(-1);";
   html += "for (const key in voltageData) {";
   html += "const cell = newRow.insertCell();";
   html += "cell.textContent = voltageData[key];";
-  html += "}";
-  html += "}";
-  html += "</script>";
+  html += "};";
+  html += "};";
 
-  // JavaScript functions for setting warm yellow and light white colors
-  html += "<script>";
   html += "function setWarmYellow() {";
-  html += "  document.getElementById('red').value = '255';";
-  html += "  document.getElementById('green').value = '80';";
-  html += "  document.getElementById('blue').value = '0';";
-  html += "  document.querySelector('form').submit();"; // Automatically submit the form
+  html += "document.getElementById('red').value = '255';";
+  html += "document.getElementById('green').value = '80';";
+  html += "document.getElementById('blue').value = '0';";
+  html += "document.querySelector('form').submit();";
   html += "}";
+
   html += "function setLightWhite() {";
-  html += "  document.getElementById('red').value = '255';";
-  html += "  document.getElementById('green').value = '255';";
-  html += "  document.getElementById('blue').value = '200';";
-  html += "  document.querySelector('form').submit();"; // Automatically submit the form
+  html += "document.getElementById('red').value = '255';";
+  html += "document.getElementById('green').value = '255';";
+  html += "document.getElementById('blue').value = '200';";
+  html += "document.querySelector('form').submit();";
   html += "}";
+
+  // html += "function setLightWhite() {";
+  // html += "document.getElementById('red').value = '255';";
+  // html += "document.getElementById('green').value = '255';";
+  // html += "document.getElementById('blue').value = '200';";
+  // html += "fetch('/set', {";
+  // html += "method:'POST',";
+  // html += "headers:{'Content-Type':'application/json'},";
+  // html += "body:JSON.stringify({red:255, green:255, blue:255})";
+  // html += "})};";
+
   html += "function turnLEDOff() {";
-  html += "  document.getElementById('red').value = '0';";
-  html += "  document.getElementById('green').value = '0';";
-  html += "  document.getElementById('blue').value = '0';";
-  html += "  document.querySelector('form').submit();"; // Automatically submit the form
+  html += "document.getElementById('red').value = '0';";
+  html += "document.getElementById('green').value = '0';";
+  html += "document.getElementById('blue').value = '0';";
+  html += "document.querySelector('form').submit();";
   html += "}";
-  html += "</script>";
 
- // JavaScript function to trigger reading analog data
-  html += "<script>";
+  // html += "function turnLEDOff() {";
+  // html += "document.getElementById('red').value = '0';";
+  // html += "document.getElementById('green').value = '0';";
+  // html += "document.getElementById('blue').value = '0';";
+  // html += "fetch('/set', {";
+  // html += "method:'POST',";
+  // html += "headers:{'Content-Type':'application/json'},";
+  // html += "body:JSON.stringify({red:0, green:0, blue:0})";
+  // html += "})};";
+
+  // html += "function turnLEDOff() {";
+  // html += "document.getElementById('red').value = '0';";
+  // html += "document.getElementById('green').value = '0';";
+  // html += "document.getElementById('blue').value = '0';";
+  // html += "fetch('/set', {";
+  // html += "method:'POST',";
+  // // html += "headers:{'Content-Type':'application/json'},";
+  // html += "body:{red:0, green:0, blue:0, brighttness:0}";
+  // html += "})};";
+
   html += "function readAnalogData() {";
-  html += "  fetch('/readanalog')";
-  html += "    .then(response => response.text())"; // Get response text (voltage info)
-  html += "    .then(data => {"; // Display voltage info on the button text
-  html += "      document.querySelector('#percent').innerText = 'Battery: ' + data + '%';"; // Update button text
-  html += "      document.querySelector('h1').innerText = 'Battery: ' + data + '%';"; // Update Header text
-  html += "    });";
-  html += "}";
+  html += "fetch('/readanalog')";
+  html += ".then((response) => response.text())";
+  html += ".then((data) => {";
+  html += "const values = data.split(',');";
+  html += "const numberArray = values.map(value => parseFloat(value.trim()));";
+  html += "document.querySelector('#percent').innerText = numberArray[4] + '%';";
+  html += "document.querySelector('#readings_adc').innerText = numberArray[0];";
+  html += "document.querySelector('#readings_voltage').innerText = numberArray[1] + 'V';";
+  html += "document.querySelector('#calibrated_voltage_after_dividing').innerText = numberArray[2] + 'V';";
+  html += "document.querySelector('#calibrated_voltage_before_dividing').innerText = numberArray[3] + 'V';";
+  html += "document.querySelector('#calculated_battery_charge').innerText = numberArray[4] + '%';";
+  html += "});";
+  html += "};";
   html += "</script>";
-
-  html += "</body></html>";
+  html += "</body>";
+  html += "</html>";
 
   server.send(200, "text/html", html);
 }
 
 void handleReadAnalog() {
-  float calibrationFactor = 0.937596899; 
+  float calibrationFactor = 0.937596899;
 
   // Get raw analog data
-  int adcValue = analogRead(A0); 
-  float rawVoltage = (adcValue / 1023.0) * 3.3; 
+  int adcValue = analogRead(A0);
+  float rawVoltage = (adcValue / 1023.0) * 3.3;
 
   // Calibrating raw data to be more presice
   float voltageAfterDividing = rawVoltage * calibrationFactor;
@@ -195,7 +396,7 @@ void handleReadAnalog() {
 
   // Map the calibrated voltage to the percentage range (2.7V to 4.2V -> 0% to 100%)
   batteryPercent = (map(voltageBeforeDividing * 100, 270, 420, 0, 100) / 100.0) * 100.0;
-  
+
   // Print results to the Serial Monitor
   Serial.print("ADC: ");
   Serial.print(adcValue);
@@ -213,7 +414,9 @@ void handleReadAnalog() {
   // Convert calibrated voltage to String with 3 decimal places
   String stringBatteryPercent = String(batteryPercent, 2);
 
-  server.send(200, "text/plain", stringBatteryPercent);
+  String data = String(adcValue) + ", " + String(rawVoltage) + ", " + String(voltageAfterDividing) + ", " + String(voltageBeforeDividing) + ", " + String(batteryPercent);
+
+  server.send(200, "text/plain", data);
 }
 
 void handleSet() {
@@ -223,6 +426,10 @@ void handleSet() {
     int green = server.arg("green").toInt();
     int blue = server.arg("blue").toInt();
     int brightness = server.arg("brightness").toInt();
+    Serial.println(red);
+    Serial.println(green);
+    Serial.println(blue);
+    Serial.println(brightness);
 
     // Set color and brightness for the entire LED strip
     fill_solid(leds, numLEDs, CRGB(red, green, blue));
