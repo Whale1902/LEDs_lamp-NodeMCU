@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <signal.h>  // for signal handling
+#include <unistd.h>  // for usleep function (delay)
 
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
@@ -17,6 +19,8 @@ const int ledPin = 4;    // Define the LED control pin (D2/GPIO4)
 CRGB leds[numLEDs];  // Define FastLED array for LEDs
 
 ESP8266WebServer server(80);
+
+bool stopAnimation = false;
 
 void setup() {
   Serial.begin(115200);                              // Start Serial communication for debugging
@@ -272,6 +276,7 @@ void handleRoot() {
   html += "<button type='button' onclick='setLightWhite()'>WHITE</button>";
   html += "<button type='button' onclick='turnLEDOff()'>TURN OFF</button>";
   html += "<button type='button' onclick='setRandomColor()'>RANDOM</button>";
+  html += "<button type='button' onclick='setCustom()'>Rainbow</button>";
   html += "</div>";
   html += "<table id='voltageTable'>";
   html += "<tr>";
@@ -314,41 +319,45 @@ void handleRoot() {
   html += "};";
 
   html += "function setCustom() {";
-  html += "let red = document.getElementById('red').value;";
-  html += "let green = document.getElementById('green').value;";
-  html += "let blue = document.getElementById('blue');";
   html += "let bright = document.getElementById('brightness').value;";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:red, green:green, blue:blue, brightness:bright})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({";
+  html += "red: 400,";
+  html += "green: 400,";
+  html += "blue: 400,";
+  html += "brightness: bright,";
+  html += "}),";
   html += "});";
-  html += "};";
-
+  html += "}";
   html += "function setWarmYellow() {";
   html += "document.getElementById('red').value = '255';";
   html += "document.getElementById('green').value = '80';";
   html += "document.getElementById('blue').value = '0';";
   html += "let bright = document.getElementById('brightness').value;";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:255, green:80, blue:0, brightness:bright})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({ red: 255, green: 80, blue: 0, brightness: bright }),";
   html += "});";
-  html += "};";
-
+  html += "}";
   html += "function setLightWhite() {";
   html += "document.getElementById('red').value = '255';";
   html += "document.getElementById('green').value = '255';";
   html += "document.getElementById('blue').value = '200';";
   html += "let bright = document.getElementById('brightness').value;";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:255, green:255, blue:255, brightness:bright})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({";
+  html += "red: 255,";
+  html += "green: 255,";
+  html += "blue: 255,";
+  html += "brightness: bright,";
+  html += "}),";
   html += "});";
-  html += "};";
-
+  html += "}";
   html += "function setRandomColor() {";
   html += "let randRed = Math.floor(Math.random() * 256);";
   html += "let randGreen = Math.floor(Math.random() * 256);";
@@ -357,22 +366,33 @@ void handleRoot() {
   html += "document.getElementById('green').value = randGreen;";
   html += "document.getElementById('blue').value = randBlue;";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:randRed, green:randGreen, blue:randBlue, brightness:255})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({";
+  html += "red: randRed,";
+  html += "green: randGreen,";
+  html += "blue: randBlue,";
+  html += "brightness: 255,";
+  html += "}),";
   html += "});";
-  html += "};";
-
+  html += "}";
+  html += "function rainbow() {";
+  html += "fetch('/set', {";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({ red: 400, green: 400, blue: 400, brightness: 400 }),";
+  html += "});";
+  html += "}";
   html += "function turnLEDOff() {";
   html += "document.getElementById('red').value = '0';";
   html += "document.getElementById('green').value = '0';";
   html += "document.getElementById('blue').value = '0';";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:0, green:0, blue:0, brightness:0})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({ red: 0, green: 0, blue: 0, brightness: 0 }),";
   html += "});";
-  html += "};";
+  html += "}";
 
   html += "function readAnalogData() {";
   html += "fetch('/readanalog')";
@@ -452,7 +472,63 @@ void handleSet() {
   int green = doc["green"];
   int blue = doc["blue"];
   int brightness = doc["brightness"];
-
-  fill_solid(leds, numLEDs, CRGB(red, green, blue));
-  FastLED.setBrightness(brightness);
+  if (red == 400 && green == 400 && blue == 400) {
+    Serial.println(stopAnimation);
+    startAnimationLoop();
+    activateRainbowAnimation();
+  } else {
+    Serial.println(stopAnimation);
+    // stopAnimationLoop();
+    fill_solid(leds, numLEDs, CRGB(red, green, blue));
+    FastLED.setBrightness(brightness);
+  }
 };
+
+void stopAnimationLoop() {
+  
+  Serial.println(stopAnimation);
+  stopAnimation = true;
+}
+
+void startAnimationLoop() {
+  
+  Serial.println(stopAnimation);
+  stopAnimation = false;
+}
+
+unsigned long previousMillis1 = 0;
+const long interval1 = 50;
+
+bool isTimeToUpdateAnimation() {
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis1 >= interval1) {
+    previousMillis1 = currentMillis;
+    return true;
+  }
+  return false;
+}
+
+void activateRainbowAnimation() {
+  Serial.println("activateRainbowAnimation()");
+  int j = 0;
+  while (!stopAnimation) {
+    for (int i = 0; i < 18; i++) {
+      leds[i] = CHSV((i * 256 / 18) + j, 255, 255);
+    }
+    FastLED.show();
+    
+    // Check if it's time to update the animation
+    if (isTimeToUpdateAnimation()) {
+      j++; // Increment j for the next frame
+    
+      if (j >= 256) {
+        j = 0; // Reset j if it exceeds 255
+      } else if (stopAnimation == true) {
+        
+        Serial.println(stopAnimation);  
+        Serial.println("stopAnimation");
+        return;
+      };
+    };
+  };
+}
