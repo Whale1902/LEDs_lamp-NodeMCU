@@ -38,7 +38,8 @@ void setup() {
   Serial.println("HTTP server started");
 }
 
-// Timer thingi
+// Timer to prevent NodeMCU to go into sleep mode
+// Will check if 5 minutes passed and if yes - just do it again
 unsigned long previousMillis = 0;  // Stores the last time the timer was updated
 const long interval = 30000;       // Interval for the timer in milliseconds
 
@@ -253,7 +254,7 @@ void handleRoot() {
   html += "placeholder='BLUE'";
   html += "/>";
   html += "</div>";
-  html += "<div class='brightness - slider'>";
+  html += "<div class='brightness-slider'>";
   html += "<input ";
   html += "type='range'";
   html += "id='brightness'";
@@ -264,7 +265,7 @@ void handleRoot() {
   html += "/>";
   html += "</div>";
   html += "</div>";
-  html += "<button type='submit' id='setColorBtn'>SET</button>";
+  html += "<button type='button' onclick='setCustom()' id='setColorBtn'>SET</button>";
   html += "</form>";
   html += "<div class='action-buttons'>";
   html += "<button type='button' onclick='setWarmYellow()'>YELLOW</button>";
@@ -311,56 +312,52 @@ void handleRoot() {
   html += "};";
   html += "};";
 
+  html += "function setCustom() {";
+  html += "let red = document.getElementById('red').value;";
+  html += "let green = document.getElementById('green').value;";
+  html += "let blue = document.getElementById('blue');";
+  html += "let bright = document.getElementById('brightness').value;";
+  html += "fetch('/set', {";
+  html += "method:'POST',";
+  html += "headers:{'Content-Type':'application/json'},";
+  html += "body:JSON.stringify({red:red, green:green, blue:blue, brightness:bright})";
+  html += "});";
+  html += "};";
+
   html += "function setWarmYellow() {";
   html += "document.getElementById('red').value = '255';";
   html += "document.getElementById('green').value = '80';";
   html += "document.getElementById('blue').value = '0';";
-  html += "document.querySelector('form').submit();";
-  html += "}";
+  html += "let bright = document.getElementById('brightness').value;";
+  html += "fetch('/set', {";
+  html += "method:'POST',";
+  html += "headers:{'Content-Type':'application/json'},";
+  html += "body:JSON.stringify({red:255, green:80, blue:0, brightness:bright})";
+  html += "});";
+  html += "};";
 
   html += "function setLightWhite() {";
   html += "document.getElementById('red').value = '255';";
   html += "document.getElementById('green').value = '255';";
   html += "document.getElementById('blue').value = '200';";
-  html += "document.querySelector('form').submit();";
-  html += "}";
-
-  // html += "function setLightWhite() {";
-  // html += "document.getElementById('red').value = '255';";
-  // html += "document.getElementById('green').value = '255';";
-  // html += "document.getElementById('blue').value = '200';";
-  // html += "fetch('/set', {";
-  // html += "method:'POST',";
-  // html += "headers:{'Content-Type':'application/json'},";
-  // html += "body:JSON.stringify({red:255, green:255, blue:255})";
-  // html += "})};";
+  html += "let bright = document.getElementById('brightness').value;";
+  html += "fetch('/set', {";
+  html += "method:'POST',";
+  html += "headers:{'Content-Type':'application/json'},";
+  html += "body:JSON.stringify({red:255, green:255, blue:255, brightness:bright})";
+  html += "});";
+  html += "};";
 
   html += "function turnLEDOff() {";
   html += "document.getElementById('red').value = '0';";
   html += "document.getElementById('green').value = '0';";
   html += "document.getElementById('blue').value = '0';";
-  html += "document.querySelector('form').submit();";
-  html += "}";
-
-  // html += "function turnLEDOff() {";
-  // html += "document.getElementById('red').value = '0';";
-  // html += "document.getElementById('green').value = '0';";
-  // html += "document.getElementById('blue').value = '0';";
-  // html += "fetch('/set', {";
-  // html += "method:'POST',";
-  // html += "headers:{'Content-Type':'application/json'},";
-  // html += "body:JSON.stringify({red:0, green:0, blue:0})";
-  // html += "})};";
-
-  // html += "function turnLEDOff() {";
-  // html += "document.getElementById('red').value = '0';";
-  // html += "document.getElementById('green').value = '0';";
-  // html += "document.getElementById('blue').value = '0';";
-  // html += "fetch('/set', {";
-  // html += "method:'POST',";
-  // // html += "headers:{'Content-Type':'application/json'},";
-  // html += "body:{red:0, green:0, blue:0, brighttness:0}";
-  // html += "})};";
+  html += "fetch('/set', {";
+  html += "method:'POST',";
+  html += "headers:{'Content-Type':'application/json'},";
+  html += "body:JSON.stringify({red:0, green:0, blue:0, brightness:0})";
+  html += "});";
+  html += "};";
 
   html += "function readAnalogData() {";
   html += "fetch('/readanalog')";
@@ -421,24 +418,26 @@ void handleReadAnalog() {
 
 void handleSet() {
   Serial.println("Set endpoint accessed");
-  if (server.hasArg("red") && server.hasArg("green") && server.hasArg("blue") && server.hasArg("brightness")) {
-    int red = server.arg("red").toInt();
-    int green = server.arg("green").toInt();
-    int blue = server.arg("blue").toInt();
-    int brightness = server.arg("brightness").toInt();
-    Serial.println(red);
-    Serial.println(green);
-    Serial.println(blue);
-    Serial.println(brightness);
 
-    // Set color and brightness for the entire LED strip
-    fill_solid(leds, numLEDs, CRGB(red, green, blue));
-    FastLED.setBrightness(brightness);
+  // Allocate a JSON document
+  StaticJsonDocument<200> doc;
 
-    // Prepare the response with a JavaScript redirect to the root endpoint
-    String response = "<script>window.location.replace('/');</script>";
-    server.send(200, "text/html", response);
-  } else {
-    server.send(400, "text/plain", "Invalid arguments");
+  // Extract the HTTP POST body and deserialize it into the JSON document
+  DeserializationError error = deserializeJson(doc, server.arg("plain"));
+
+  // Check for errors in parsing the JSON
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.c_str());
+    return;
   }
-}
+
+  // Extract values and log them
+  int red = doc["red"];
+  int green = doc["green"];
+  int blue = doc["blue"];
+  int brightness = doc["brightness"];
+
+  fill_solid(leds, numLEDs, CRGB(red, green, blue));
+  FastLED.setBrightness(brightness);
+};
