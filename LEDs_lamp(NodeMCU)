@@ -208,9 +208,9 @@ void handleRoot() {
   html += "margin-bottom: 10px;";
   html += "border-bottom: 1px solid gray;";
   html += "}";
-  html += "@media only screen and (max-width: 600px) {";
-  html += "form {";
-  html += "width: 90%;";
+  html += "@media only screen and (max-width: 700px) {";
+  html += "body {";
+  html += "width: 95%;";
   html += "}";
   html += "}";
   html += "</style>";
