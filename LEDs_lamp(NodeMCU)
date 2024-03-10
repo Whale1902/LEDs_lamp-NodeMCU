@@ -4,6 +4,9 @@
 #include <ESP8266WebServer.h>
 #include <FastLED.h>
 #include <ArduinoJson.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
@@ -179,9 +182,6 @@ void handleRoot() {
   html += "justify-content: space-between;";
   html += "padding: 25px 0;";
   html += "}";
-  html += ".action-buttons button:nth-of-type(2) {";
-  html += "margin: 0 20px;";
-  html += "}";
   html += "button {";
   html += "border-radius: 25px;";
   html += "border-width: 0;";
@@ -189,7 +189,7 @@ void handleRoot() {
   html += "cursor: pointer;";
   html += "background-color: #bad7f2;";
   html += "padding: 15px 0;";
-  html += "marin: 15px 0;";
+  html += "margin: 0 5px;";
   html += "}";
   html += "button:hover {";
   html += "background-color: #496ddb;";
@@ -271,6 +271,7 @@ void handleRoot() {
   html += "<button type='button' onclick='setWarmYellow()'>YELLOW</button>";
   html += "<button type='button' onclick='setLightWhite()'>WHITE</button>";
   html += "<button type='button' onclick='turnLEDOff()'>TURN OFF</button>";
+  html += "<button type='button' onclick='setRandomColor()'>RANDOM</button>";
   html += "</div>";
   html += "<table id='voltageTable'>";
   html += "<tr>";
@@ -345,6 +346,20 @@ void handleRoot() {
   html += "method:'POST',";
   html += "headers:{'Content-Type':'application/json'},";
   html += "body:JSON.stringify({red:255, green:255, blue:255, brightness:bright})";
+  html += "});";
+  html += "};";
+
+  html += "function setRandomColor() {";
+  html += "let randRed = Math.floor(Math.random() * 256);";
+  html += "let randGreen = Math.floor(Math.random() * 256);";
+  html += "let randBlue = Math.floor(Math.random() * 256);";
+  html += "document.getElementById('red').value = randRed;";
+  html += "document.getElementById('green').value = randGreen;";
+  html += "document.getElementById('blue').value = randBlue;";
+  html += "fetch('/set', {";
+  html += "method:'POST',";
+  html += "headers:{'Content-Type':'application/json'},";
+  html += "body:JSON.stringify({red:randRed, green:randGreen, blue:randBlue, brightness:255})";
   html += "});";
   html += "};";
 
