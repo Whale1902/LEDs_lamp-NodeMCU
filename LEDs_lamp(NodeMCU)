@@ -23,7 +23,7 @@ CRGB leds[numLEDs];  // Define FastLED array for LEDs
 ESP8266WebServer server(80);
 
 bool animationRunning = false;
-int animationSpeed = 20; // Lower number means lower delay and faster animation
+int animationSpeed = 20;  // Lower number means lower delay and faster animation
 
 void setup() {
   Serial.begin(115200);                              // Start Serial communication for debugging
@@ -33,10 +33,10 @@ void setup() {
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    Serial.println("Connecting to WiFi...");
+    // Serial.println("Connecting to WiFi...");
   }
 
-  Serial.println("Connected to WiFi");
+  // Serial.println("Connected to WiFi");
 
   // Define web server routes
   server.on("/", HTTP_GET, handleRoot);
@@ -71,14 +71,14 @@ void loop() {
   if (animationRunning) {
     rainbow();
     FastLED.show();
-    delay(animationSpeed); // Adjust the speed of the animation
+    delay(animationSpeed);  // Adjust the speed of the animation
   }
 }
 
 float batteryPercent = 0;
 
 void handleRoot() {
-  Serial.println("Root endpoint accessed");
+  // Serial.println("Root endpoint accessed");
   String html = "<!DOCTYPE html>";
   html += "<html lang='en'>";
   html += "<head>";
@@ -292,7 +292,7 @@ void handleRoot() {
   html += "</div>";
   html += "<div class='second-row-action-buttons'>";
   html += "<button type='button' onclick='setRandomColor()'>RANDOM</button>";
-  html += "<button type='button' onclick='setCustom()'>Rainbow</button>";
+  html += "<button type='button' onclick='rainbow()'>Rainbow</button>";
   html += "</div>";
   html += "</div>";
   html += "<table id='voltageTable'>";
@@ -335,7 +335,7 @@ void handleRoot() {
   html += "};";
   html += "};";
 
-  html += "function setCustom() {";
+  html += "function rainbow() {";
   html += "let bright = document.getElementById('brightness').value;";
   html += "fetch('/set', {";
   html += "method: 'POST',";
@@ -348,6 +348,21 @@ void handleRoot() {
   html += "}),";
   html += "});";
   html += "}";
+
+  html += "function setCustom() {";
+  html += "let bright = document.getElementById('brightness').value;";
+  html += "fetch('/set', {";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({";
+  html += "red: document.getElementById('red').value,";
+  html += "green: document.getElementById('green').value,";
+  html += "blue: document.getElementById('blue').value,";
+  html += "brightness: bright,";
+  html += "}),";
+  html += "});";
+  html += "}";
+
   html += "function setWarmYellow() {";
   html += "document.getElementById('red').value = '255';";
   html += "document.getElementById('green').value = '80';";
@@ -433,7 +448,6 @@ void handleRoot() {
 }
 
 void handleReadAnalog() {
-  handleStop();
   float calibrationFactor = 0.937596899;
 
   // Get raw analog data
@@ -479,26 +493,29 @@ void handleSet() {
   // Extract the HTTP POST body and deserialize it into the JSON document
   DeserializationError error = deserializeJson(doc, server.arg("plain"));
 
-  // Check for errors in parsing the JSON
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.c_str());
-    return;
-  }
-
   // Extract values and log them
   int red = doc["red"];
   int green = doc["green"];
   int blue = doc["blue"];
   int brightness = doc["brightness"];
+
+  Serial.print(red);
+  Serial.print(", ");
+  Serial.print(green);
+  Serial.print(", ");
+  Serial.print(blue);
+  Serial.print(", ");
+  Serial.println(brightness);
+
   if (red == 400 && green == 400 && blue == 400) {
     handleStart();
+    rainbow();
   } else {
     handleStop();
+    fill_solid(leds, numLEDs, CRGB(red, green, blue));
+    FastLED.setBrightness(brightness);
+    FastLED.show();
   }
-
-  fill_solid(leds, numLEDs, CRGB(red, green, blue));
-  FastLED.setBrightness(brightness);
 
   server.send(200, "text/html", "ok");
 };
