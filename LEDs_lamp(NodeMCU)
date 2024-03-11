@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <signal.h>  // for signal handling
+#include <unistd.h>  // for usleep function (delay)
+
+String imageString = "data:image/png;base64,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";
 
 const char* ssid = "RustyToha2.4";
 const char* password = "m6v8aze8l";
@@ -17,6 +21,9 @@ const int ledPin = 4;    // Define the LED control pin (D2/GPIO4)
 CRGB leds[numLEDs];  // Define FastLED array for LEDs
 
 ESP8266WebServer server(80);
+
+bool animationRunning = false;
+int animationSpeed = 20; // Lower number means lower delay and faster animation
 
 void setup() {
   Serial.begin(115200);                              // Start Serial communication for debugging
@@ -42,7 +49,7 @@ void setup() {
 }
 
 // Timer to prevent NodeMCU to go into sleep mode
-// Will check if 5 minutes passed and if yes - just do it again
+// Will check if 5 minutes passed and if yes - just checking again
 unsigned long previousMillis = 0;  // Stores the last time the timer was updated
 const long interval = 30000;       // Interval for the timer in milliseconds
 
@@ -60,10 +67,15 @@ void loop() {
   delay(10);       // Small delay for smoother execution (optional)
 
   timerFunc();
+
+  if (animationRunning) {
+    rainbow();
+    FastLED.show();
+    delay(animationSpeed); // Adjust the speed of the animation
+  }
 }
 
 float batteryPercent = 0;
-String imageString = "data:image/png;base64,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";
 
 void handleRoot() {
   Serial.println("Root endpoint accessed");
@@ -181,6 +193,11 @@ void handleRoot() {
   html += "display: flex;";
   html += "justify-content: space-between;";
   html += "padding: 25px 0;";
+  html += "flex-direction: column;";
+  html += "}";
+  html += "button[type='button'] {";
+  html += "width: 30%;";
+  html += "margin: 5px;";
   html += "}";
   html += "button {";
   html += "border-radius: 25px;";
@@ -268,10 +285,15 @@ void handleRoot() {
   html += "<button type='button' onclick='setCustom()' id='setColorBtn'>SET</button>";
   html += "</form>";
   html += "<div class='action-buttons'>";
+  html += "<div class='first-row-action-buttons'>";
   html += "<button type='button' onclick='setWarmYellow()'>YELLOW</button>";
   html += "<button type='button' onclick='setLightWhite()'>WHITE</button>";
   html += "<button type='button' onclick='turnLEDOff()'>TURN OFF</button>";
+  html += "</div>";
+  html += "<div class='second-row-action-buttons'>";
   html += "<button type='button' onclick='setRandomColor()'>RANDOM</button>";
+  html += "<button type='button' onclick='setCustom()'>Rainbow</button>";
+  html += "</div>";
   html += "</div>";
   html += "<table id='voltageTable'>";
   html += "<tr>";
@@ -314,41 +336,45 @@ void handleRoot() {
   html += "};";
 
   html += "function setCustom() {";
-  html += "let red = document.getElementById('red').value;";
-  html += "let green = document.getElementById('green').value;";
-  html += "let blue = document.getElementById('blue');";
   html += "let bright = document.getElementById('brightness').value;";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:red, green:green, blue:blue, brightness:bright})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({";
+  html += "red: 400,";
+  html += "green: 400,";
+  html += "blue: 400,";
+  html += "brightness: bright,";
+  html += "}),";
   html += "});";
-  html += "};";
-
+  html += "}";
   html += "function setWarmYellow() {";
   html += "document.getElementById('red').value = '255';";
   html += "document.getElementById('green').value = '80';";
   html += "document.getElementById('blue').value = '0';";
   html += "let bright = document.getElementById('brightness').value;";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:255, green:80, blue:0, brightness:bright})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({ red: 255, green: 80, blue: 0, brightness: bright }),";
   html += "});";
-  html += "};";
-
+  html += "}";
   html += "function setLightWhite() {";
   html += "document.getElementById('red').value = '255';";
   html += "document.getElementById('green').value = '255';";
   html += "document.getElementById('blue').value = '200';";
   html += "let bright = document.getElementById('brightness').value;";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:255, green:255, blue:255, brightness:bright})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({";
+  html += "red: 255,";
+  html += "green: 255,";
+  html += "blue: 255,";
+  html += "brightness: bright,";
+  html += "}),";
   html += "});";
-  html += "};";
-
+  html += "}";
   html += "function setRandomColor() {";
   html += "let randRed = Math.floor(Math.random() * 256);";
   html += "let randGreen = Math.floor(Math.random() * 256);";
@@ -357,22 +383,33 @@ void handleRoot() {
   html += "document.getElementById('green').value = randGreen;";
   html += "document.getElementById('blue').value = randBlue;";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:randRed, green:randGreen, blue:randBlue, brightness:255})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({";
+  html += "red: randRed,";
+  html += "green: randGreen,";
+  html += "blue: randBlue,";
+  html += "brightness: 255,";
+  html += "}),";
   html += "});";
-  html += "};";
-
+  html += "}";
+  html += "function rainbow() {";
+  html += "fetch('/set', {";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({ red: 400, green: 400, blue: 400, brightness: 400 }),";
+  html += "});";
+  html += "}";
   html += "function turnLEDOff() {";
   html += "document.getElementById('red').value = '0';";
   html += "document.getElementById('green').value = '0';";
   html += "document.getElementById('blue').value = '0';";
   html += "fetch('/set', {";
-  html += "method:'POST',";
-  html += "headers:{'Content-Type':'application/json'},";
-  html += "body:JSON.stringify({red:0, green:0, blue:0, brightness:0})";
+  html += "method: 'POST',";
+  html += "headers: { 'Content-Type': 'application/json' },";
+  html += "body: JSON.stringify({ red: 0, green: 0, blue: 0, brightness: 0 }),";
   html += "});";
-  html += "};";
+  html += "}";
 
   html += "function readAnalogData() {";
   html += "fetch('/readanalog')";
@@ -396,6 +433,7 @@ void handleRoot() {
 }
 
 void handleReadAnalog() {
+  handleStop();
   float calibrationFactor = 0.937596899;
 
   // Get raw analog data
@@ -433,6 +471,7 @@ void handleReadAnalog() {
 
 void handleSet() {
   Serial.println("Set endpoint accessed");
+  handleStop();
 
   // Allocate a JSON document
   StaticJsonDocument<200> doc;
@@ -452,7 +491,35 @@ void handleSet() {
   int green = doc["green"];
   int blue = doc["blue"];
   int brightness = doc["brightness"];
+  if (red == 400 && green == 400 && blue == 400) {
+    handleStart();
+  } else {
+    handleStop();
+  }
 
   fill_solid(leds, numLEDs, CRGB(red, green, blue));
   FastLED.setBrightness(brightness);
+
+  server.send(200, "text/html", "ok");
 };
+
+void handleStop() {
+  Serial.println("handleStop()");
+  animationRunning = false;
+  fill_solid(leds, numLEDs, CRGB::Black);
+  FastLED.show();
+}
+
+void handleStart() {
+  animationRunning = true;
+  Serial.println("handleStart()");
+}
+
+void rainbow() {
+  static uint8_t startIndex = 0;
+  startIndex = startIndex + 1; /* motion speed */
+
+  for (int i = 0; i < numLEDs; i++) {
+    leds[i] = CHSV(startIndex + (i * 256 / numLEDs), 255, 255);
+  }
+}
