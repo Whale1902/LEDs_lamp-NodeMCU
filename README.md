@@ -1,3 +1,5 @@
+https://github.com/Whale1902/LEDs_lamp-NodeMCU/assets/103887569/2492d851-5305-4fd6-baba-04edadeb8631
+
 This project will make your LED Strip  a little tiny bit more smart. Board will hosst the webpage to control your webpage.
 
 It is essensial to use 2.4Ghz WiFi network.
