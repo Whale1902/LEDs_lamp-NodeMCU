@@ -374,6 +374,7 @@ void handleRoot() {
   html += "body: JSON.stringify({ red: 255, green: 80, blue: 0, brightness: bright }),";
   html += "});";
   html += "}";
+
   html += "function setLightWhite() {";
   html += "document.getElementById('red').value = '255';";
   html += "document.getElementById('green').value = '255';";
@@ -390,6 +391,7 @@ void handleRoot() {
   html += "}),";
   html += "});";
   html += "}";
+
   html += "function setRandomColor() {";
   html += "let randRed = Math.floor(Math.random() * 256);";
   html += "let randGreen = Math.floor(Math.random() * 256);";
@@ -408,6 +410,7 @@ void handleRoot() {
   html += "}),";
   html += "});";
   html += "}";
+
   html += "function rainbow() {";
   html += "fetch('/set', {";
   html += "method: 'POST',";
@@ -415,6 +418,7 @@ void handleRoot() {
   html += "body: JSON.stringify({ red: 400, green: 400, blue: 400, brightness: 400 }),";
   html += "});";
   html += "}";
+  
   html += "function turnLEDOff() {";
   html += "document.getElementById('red').value = '0';";
   html += "document.getElementById('green').value = '0';";
@@ -440,6 +444,22 @@ void handleRoot() {
   html += "document.querySelector('#calculated_battery_charge').innerText = numberArray[4] + '%';";
   html += "});";
   html += "};";
+
+  html += "setInterval(function() {";
+  html += "fetch('/readanalog')";
+  html += ".then((response) => response.text())";
+  html += ".then((data) => {";
+  html += "const values = data.split(',');";
+  html += "const numberArray = values.map(value => parseFloat(value.trim()));";
+  html += "document.querySelector('#percent').innerText = numberArray[4] + '%';";
+  html += "document.querySelector('#readings_adc').innerText = numberArray[0];";
+  html += "document.querySelector('#readings_voltage').innerText = numberArray[1] + 'V';";
+  html += "document.querySelector('#calibrated_voltage_after_dividing').innerText = numberArray[2] + 'V';";
+  html += "document.querySelector('#calibrated_voltage_before_dividing').innerText = numberArray[3] + 'V';";
+  html += "document.querySelector('#calculated_battery_charge').innerText = numberArray[4] + '%';";
+  html += "});";
+  html += "}, 5000);";
+
   html += "</script>";
   html += "</body>";
   html += "</html>";
